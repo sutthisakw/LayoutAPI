@@ -1,7 +1,8 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:layout/pages/detail.dart';
+import 'package:http/http.dart' as http;
+import 'dart:async';
 
 class HomePage extends StatefulWidget {
   //HomePage({Key? key}) : super(key: key);
@@ -20,17 +21,21 @@ class _HomePageState extends State<HomePage> {
         body: Padding(
             padding: const EdgeInsets.all(8.0),
             child: FutureBuilder(
-              builder: (context, snapshot) {
-                var data = json.decode(snapshot.data.toString());
+              builder: (context, AsyncSnapshot snapshot) { //เพิ่ม AsyncSnapshot เพื่อใช้ตรง return MyBox
+                //var data = json.decode(snapshot.data.toString());
                 return ListView.builder(
                     itemBuilder: (BuildContext context, int index) {
-                      return MyBox(data[index]['title'],
-                          data[index]['subtitle'], data[index]['image_url'], data[index]['detail']);
+                      return MyBox(
+                        //เพิ่มคำว่า snapshot.data
+                          snapshot.data[index]['title'],
+                          snapshot.data[index]['subtitle'],
+                          snapshot.data[index]['image_url'],
+                          snapshot.data[index]['detail']);
                     },
-                    itemCount: data.length);
+                    itemCount: snapshot.data.length);
               },
-              future:
-                  DefaultAssetBundle.of(context).loadString('assets/data.json'),
+              //future: DefaultAssetBundle.of(context).loadString('assets/data.json'),
+              future: getData(),
             )));
   }
 
@@ -78,8 +83,10 @@ class _HomePageState extends State<HomePage> {
           ),
           TextButton(
               onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => DetailPage(v1,v2,v3,v4)));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => DetailPage(v1, v2, v3, v4)));
               },
               child: Text("อ่านต่อ...",
                   style: TextStyle(
@@ -88,5 +95,14 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
+  }
+
+//สร้างฟังก์ชัน getData เพื่อเรียกใช้ data.json ที่อัพโหลดอยู่บน github
+  Future getData() async {
+    //https://raw.githubusercontent.com/sutthisakw/LayoutAPI/main/data.json
+    var url = Uri.https('raw.githubusercontent.com', '/sutthisakw/LayoutAPI/main/data.json');
+    var response = await http.get(url);
+    var result = json.decode(response.body);
+    return result;
   }
 }
